@@ -38,7 +38,19 @@ export const remoteCard = async (req: Request, res: Response) => {
   }
 };
 
-export const putLikes = async (req: Request, res: Response) => {
+export const likeCard = (req: Request, res: Response) => Card.findByIdAndUpdate(
+  req.params.cardId,
+  { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+  { new: true },
+);
+
+export const dislikeCard = (req: Request, res: Response) => Card.findByIdAndUpdate(
+  req.params.cardId,
+  { $pull: { likes: req.user._id } }, // убрать _id из массива
+  { new: true },
+);
+
+/* export const putLikes = async (req: Request, res: Response) => {
   console.log(req.user._id); // _id станет доступен
   return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'put Likes' });
 };
@@ -46,4 +58,4 @@ export const putLikes = async (req: Request, res: Response) => {
 export const deleteLikes = async (req: Request, res: Response) => {
   console.log(req.user._id); // _id станет доступен
   return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'delete Likes' });
-};
+}; */

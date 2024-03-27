@@ -1,12 +1,14 @@
 import { Router } from 'express';
-import { createUser, getUserById, getUsers } from '../controllers/users';
+import {
+  createUser, getUserById, getUsers, updateAvatar, updateProfile,
+} from '../controllers/users';
 
 const userRouter = Router();
 
-userRouter.get('/', getUsers);
-userRouter.get('/:userId', getUserById);
-userRouter.post('/', createUser);
-userRouter.patch('/me', getUserById);
-userRouter.patch('/me/avatar', createUser);
+userRouter.get('/', getUsers); // Вернуть всех пользователей
+userRouter.get('/:userId', getUserById); // вернуть пользователя по ИД
+userRouter.post('/', createUser); // создать пользователя
+userRouter.patch('/me', updateProfile); // обновить профиль
+userRouter.patch('/me/avatar', updateAvatar); // обновить аватар
 
 export default userRouter;

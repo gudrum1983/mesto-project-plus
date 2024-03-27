@@ -25,9 +25,9 @@ export const userSchema = new Schema<IUser>(
       required: true,
     },
   },
-  {
-    versionKey: false, timestamps: true,
-  },
+  { versionKey: false },
+  // Если нужно сохранять время создания и изменения, то можно добавить timestamps
+  // {versionKey: false, timestamps: true}
 );
 
 export default mongoose.model<IUser>('user', userSchema);

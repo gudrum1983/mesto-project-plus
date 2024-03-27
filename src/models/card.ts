@@ -37,9 +37,9 @@ export const cardSchema = new Schema<ICard>(
       default: Date.now,
     },
   },
-  {
-    versionKey: false, timestamps: true,
-  },
+  { versionKey: false },
+  // Если нужно сохранять время создания и изменения, то можно добавить timestamps
+  // {versionKey: false, timestamps: true}
 );
 
 export default mongoose.model<ICard>('card', cardSchema);

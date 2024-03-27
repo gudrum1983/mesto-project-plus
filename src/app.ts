@@ -10,7 +10,7 @@ const app = express();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.user = {
-    _id: '66028c783de23a3039b1c7df', // вставьте сюда _id созданного в предыдущем пункте пользователя
+    _id: '66046b3945b0653971fbc7c4', // вставьте сюда _id созданного в предыдущем пункте пользователя
   };
 
   next();
