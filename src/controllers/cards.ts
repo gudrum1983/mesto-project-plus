@@ -37,3 +37,13 @@ export const remoteCard = async (req: Request, res: Response) => {
     return res.send(err);
   }
 };
+
+export const putLikes = async (req: Request, res: Response) => {
+  console.log(req.user._id); // _id станет доступен
+  return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'put Likes' });
+};
+
+export const deleteLikes = async (req: Request, res: Response) => {
+  console.log(req.user._id); // _id станет доступен
+  return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'delete Likes' });
+};
