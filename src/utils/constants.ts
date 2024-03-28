@@ -48,6 +48,10 @@ export const goodResponse = <T>(res: Response, data: T) => {
   res.status(constants.HTTP_STATUS_OK).send(data);
 };
 
+export const createDocument = <T>(res: Response, data: T) => {
+  res.status(constants.HTTP_STATUS_CREATED).send(data);
+};
+
 export const errorNotFound = () => {
   const error: Error = new Error();
   error.name = errorTypes.NOT_FOUND.name;
@@ -58,6 +62,8 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   if (err instanceof ErrorMongoose && err.name === 'ValidationError') {
     return badRequestError(res);
   }
+  // BSONError выходит когда например в параметре userId указано некорректное количество символов
+  // Скрин ошибки при дебаге в файле  '../src/vendor/image/BSONError.jpg'
   if (err instanceof Error && err.name === errorTypes.BSON_ERROR.name) {
     return badRequestError(res);
   }

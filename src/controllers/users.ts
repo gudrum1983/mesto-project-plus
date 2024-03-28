@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import User from '../models/user';
 import {
-  checkErrors, errorNotFound, errorTypes, goodResponse,
+  checkErrors, createDocument, errorNotFound, errorTypes, goodResponse,
 } from '../utils/constants';
 
 export const getUsers = async (req: Request, res: Response) => {
@@ -28,7 +28,7 @@ export const getUserById = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   try {
     const newUser = await new User(req.body).save();
-    return goodResponse(res, newUser);
+    return createDocument(res, newUser);
   } catch (err) {
     return checkErrors(err, res);
   }
