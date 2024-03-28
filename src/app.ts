@@ -5,24 +5,13 @@ import router from './routes';
 const PORT = 3000;
 const app = express();
 
-// app.get('/', (req: Request, res: Response) => {res.send(req.query);});
-// app.listen(PORT, () => {console.log(`App listening on port ${PORT}`);})
-
 app.use((req: Request, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: '66046b3945b0653971fbc7c4', // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
-
+  req.user = { _id: '66054790660b8e10ae9420ec' };
   next();
 });
 
-router.use('/', (req: Request, res: Response) => {
-  // логика обработки запроса
-  console.log(req);
-  res.send({ message: 'Hello world121' });
-});
-app.use(express.json());
-app.use(router);
+app.use(express.json()); // для собирания JSON-формата
+app.use(express.urlencoded({ extended: true })); // для приёма веб-страниц внутри POST-запроса
 
 const connect = async () => {
   try {
@@ -30,10 +19,12 @@ const connect = async () => {
     await mongoose.connect('mongodb://127.0.0.1');
     console.log('Подключились к базе');
     await app.listen(PORT);
-    console.log(`App listening on port ${PORT}`);
+    console.log(`Сервер запущен па порте: ${PORT}`);
   } catch (err) {
     console.log(err);
   }
 };
+
+app.use(router);
 
 connect();

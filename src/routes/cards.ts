@@ -6,7 +6,7 @@ import {
 const cardsRouter = Router();
 
 cardsRouter.get('/', getCards); // вернуть все карточки
-cardsRouter.post('/', createCard); // создать карточка
+cardsRouter.post('/', createCard); // создать карточку
 cardsRouter.delete('/:cardId', remoteCard); // удалить карточку по ИД
 cardsRouter.put('/:cardId/likes', likeCard); // поставить лайк
 cardsRouter.delete('/:cardId/likes', dislikeCard); // убрать лайк

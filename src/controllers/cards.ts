@@ -1,61 +1,66 @@
 import { Request, Response } from 'express';
-import { constants } from 'http2';
 import { ObjectId } from 'mongodb';
-import User from '../models/user';
 import Card from '../models/card';
+import { checkErrors, errorNotFound, goodResponse } from '../utils/constants';
 
 export const getCards = async (req: Request, res: Response) => {
   try {
-    const cards = await User.find({});
-    return res.send(cards);
+    const cards = await Card.find({}).populate(['owner', 'likes']).orFail(() => errorNotFound());
+    return goodResponse(res, cards);
   } catch (err) {
-    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера' });
+    return checkErrors(err, res);
   }
 };
 
 export const createCard = async (req: Request, res: Response) => {
-  console.log(req.user._id); // _id станет доступен
-  const { name, link } = req.body;
-  const ownerId = req.user._id;
-  const newCard = new Card({ name, link, owner: ownerId });
-  return res.status(constants.HTTP_STATUS_CREATED).send(await newCard.save());
+  try {
+    const { name, link } = req.body;
+    const ownerId = new ObjectId(req.user._id);
+    const newCard = await new Card({ name, link, owner: ownerId }).save();
+    return goodResponse(res, await newCard.populate('owner'));
+  } catch (err) {
+    return checkErrors(err, res);
+  }
 };
 
 export const remoteCard = async (req: Request, res: Response) => {
   try {
-    const { cardId } = req.params;
-    const card = await User.find(new ObjectId(cardId)).orFail(() => {
-      const error = new Error('Пользователя с таким ИД нет');
-      error.name = 'Not found';
-      return error;
-    });
-    return res.send(card);
+    const cardId = new ObjectId(req.params.cardId);
+    const ownerId = new ObjectId(req.user._id);
+    const cardToDelete = await Card
+      .findOne({ _id: cardId, owner: ownerId })
+      .populate(['owner', 'likes'])
+      .orFail(() => errorNotFound());
+    return goodResponse(res, cardToDelete);
   } catch (err) {
-    if (err instanceof Error && err.name === 'Not found') {
-      return res.send(err.message);
-    }
-    return res.send(err);
+    return checkErrors(err, res);
   }
 };
 
-export const likeCard = (req: Request, res: Response) => Card.findByIdAndUpdate(
-  req.params.cardId,
-  { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-  { new: true },
-);
-
-export const dislikeCard = (req: Request, res: Response) => Card.findByIdAndUpdate(
-  req.params.cardId,
-  { $pull: { likes: req.user._id } }, // убрать _id из массива
-  { new: true },
-);
-
-/* export const putLikes = async (req: Request, res: Response) => {
-  console.log(req.user._id); // _id станет доступен
-  return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'put Likes' });
+export const likeCard = async (req: Request, res: Response) => {
+  try {
+    const cardId = new ObjectId(req.params.cardId);
+    const ownerId = new ObjectId(req.user._id);
+    const cardToLike = await Card
+      .findByIdAndUpdate(cardId, { $addToSet: { likes: ownerId } }, { new: true })
+      .populate(['owner', 'likes'])
+      .orFail(() => errorNotFound());
+    return goodResponse(res, cardToLike);
+  } catch (err) {
+    return checkErrors(err, res);
+  }
 };
 
-export const deleteLikes = async (req: Request, res: Response) => {
-  console.log(req.user._id); // _id станет доступен
-  return res.status(constants.HTTP_STATUS_CREATED).send({ message: 'delete Likes' });
-}; */
+export const dislikeCard = async (req: Request, res: Response) => {
+  try {
+    const cardId = new ObjectId(req.params.cardId);
+    const ownerId = req.user._id;
+    const cardToDislike = await Card
+      .findByIdAndUpdate(cardId, { $pull: { likes: ownerId } }, { new: true })
+      .populate(['owner', 'likes'])
+      .orFail(() => errorNotFound());
+    return goodResponse(res, cardToDislike);
+  } catch (err) {
+    return checkErrors(err, res);
+  }
+};

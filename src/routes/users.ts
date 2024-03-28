@@ -5,7 +5,7 @@ import {
 
 const userRouter = Router();
 
-userRouter.get('/', getUsers); // Вернуть всех пользователей
+userRouter.get('/', getUsers); // вернуть всех пользователей
 userRouter.get('/:userId', getUserById); // вернуть пользователя по ИД
 userRouter.post('/', createUser); // создать пользователя
 userRouter.patch('/me', updateProfile); // обновить профиль
