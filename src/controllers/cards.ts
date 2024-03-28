@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import Card from '../models/card';
-import { checkErrors, errorNotFound, goodResponse } from '../utils/constants';
+import {
+  checkErrors, createDocument, errorNotFound, goodResponse,
+} from '../utils/constants';
 
 export const getCards = async (req: Request, res: Response) => {
   try {
-    const cards = await Card.find({}).populate(['owner', 'likes']).orFail(() => errorNotFound());
+    const cards = await Card.find({}).populate(['owner', 'likes']);
     return goodResponse(res, cards);
   } catch (err) {
     return checkErrors(err, res);
@@ -17,7 +19,7 @@ export const createCard = async (req: Request, res: Response) => {
     const { name, link } = req.body;
     const ownerId = new ObjectId(req.user._id);
     const newCard = await new Card({ name, link, owner: ownerId }).save();
-    return goodResponse(res, await newCard.populate('owner'));
+    return createDocument(res, await newCard.populate('owner'));
   } catch (err) {
     return checkErrors(err, res);
   }

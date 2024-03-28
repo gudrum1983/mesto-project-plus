@@ -28,12 +28,10 @@ export const cardSchema = new Schema<ICard>(
     },
     likes: {
       type: [{ type: Schema.Types.ObjectId, ref: 'user' }],
-      required: true,
       default: [],
     },
     createdAt: {
       type: Date,
-      required: true,
       default: Date.now,
     },
   },
