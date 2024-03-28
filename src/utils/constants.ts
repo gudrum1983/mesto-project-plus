@@ -64,7 +64,7 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   }
   // BSONError выходит когда например в параметре userId указано некорректное количество символов
   // Скрин ошибки при дебаге в файле '../src/vendor/image/BSONError.jpg'
-  // Также можете посмотреть тут https://github.com/gudrum1983/mesto-project-plus
+  // Также можете посмотреть тут если не видно на платформе https://github.com/gudrum1983/mesto-project-plus
   if (err instanceof Error && err.name === errorTypes.BSON_ERROR.name) {
     return badRequestError(res);
   }
