@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
 import Card from '../models/card';
 import {
   checkErrors, createDocument, errorNotFound, goodResponse,
@@ -17,7 +16,7 @@ export const getCards = async (req: Request, res: Response) => {
 export const createCard = async (req: Request, res: Response) => {
   try {
     const { name, link } = req.body;
-    const ownerId = new ObjectId(req.user._id);
+    const ownerId = req.user._id;
     const newCard = await new Card({ name, link, owner: ownerId }).save();
     return createDocument(res, await newCard.populate('owner'));
   } catch (err) {
@@ -27,8 +26,8 @@ export const createCard = async (req: Request, res: Response) => {
 
 export const remoteCard = async (req: Request, res: Response) => {
   try {
-    const cardId = new ObjectId(req.params.cardId);
-    const ownerId = new ObjectId(req.user._id);
+    const { cardId } = req.params;
+    const ownerId = req.user._id;
     const cardToDelete = await Card
       .findOne({ _id: cardId, owner: ownerId })
       .populate(['owner', 'likes'])
@@ -41,8 +40,8 @@ export const remoteCard = async (req: Request, res: Response) => {
 
 export const likeCard = async (req: Request, res: Response) => {
   try {
-    const cardId = new ObjectId(req.params.cardId);
-    const ownerId = new ObjectId(req.user._id);
+    const { cardId } = req.params;
+    const ownerId = req.user._id;
     const cardToLike = await Card
       .findByIdAndUpdate(cardId, { $addToSet: { likes: ownerId } }, { new: true })
       .populate(['owner', 'likes'])
@@ -55,7 +54,7 @@ export const likeCard = async (req: Request, res: Response) => {
 
 export const dislikeCard = async (req: Request, res: Response) => {
   try {
-    const cardId = new ObjectId(req.params.cardId);
+    const { cardId } = req.params;
     const ownerId = req.user._id;
     const cardToDislike = await Card
       .findByIdAndUpdate(cardId, { $pull: { likes: ownerId } }, { new: true })

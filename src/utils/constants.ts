@@ -1,6 +1,6 @@
 import { constants } from 'http2';
 import { Response } from 'express';
-import { Error as ErrorMongoose } from 'mongoose';
+import mongoose, { Error as ErrorMongoose } from 'mongoose';
 
 type TError = {
   message: string,
@@ -9,7 +9,7 @@ type TError = {
   alt: string,
 };
 
-type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BSON_ERROR';
+type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BAD_REQUEST';
 
 export const errorTypes: Record<Name, TError> = {
   NOT_FOUND: {
@@ -24,7 +24,7 @@ export const errorTypes: Record<Name, TError> = {
     status: constants.HTTP_STATUS_INTERNAL_SERVER_ERROR,
     alt: '500',
   },
-  BSON_ERROR: {
+  BAD_REQUEST: {
     message: 'Переданы некорректные данные',
     name: 'BSONError',
     status: constants.HTTP_STATUS_BAD_REQUEST,
@@ -41,7 +41,7 @@ const notFoundError = (res: Response) => {
 };
 
 const badRequestError = (res: Response) => {
-  res.status(errorTypes.BSON_ERROR.status).send({ message: errorTypes.BSON_ERROR.message });
+  res.status(errorTypes.BAD_REQUEST.status).send({ message: errorTypes.BAD_REQUEST.message });
 };
 
 export const goodResponse = <T>(res: Response, data: T) => {
@@ -62,11 +62,8 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   if (err instanceof ErrorMongoose && err.name === 'ValidationError') {
     return badRequestError(res);
   }
-  // BSONError выходит когда например в параметре userId указано некорректное количество символов
-  // Скрин ошибки при дебаге в файле '../src/vendor/image/BSONError.jpg'
-  // Также можете посмотреть тут если не видно на платформе https://github.com/gudrum1983/mesto-project-plus
-  if (err instanceof Error && err.name === errorTypes.BSON_ERROR.name) {
-    return badRequestError(res);
+  if (err instanceof mongoose.Error.CastError && err.name === 'CastError') {
+    return notFoundError(res);
   }
   if (err instanceof Error && err.name === errorTypes.NOT_FOUND.name) {
     return notFoundError(res);
