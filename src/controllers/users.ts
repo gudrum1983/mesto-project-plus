@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
 import User from '../models/user';
 import {
   checkErrors, createDocument, errorNotFound, errorTypes, goodResponse,
@@ -18,7 +17,7 @@ export const getUsers = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(new ObjectId(userId)).orFail(() => errorNotFound());
+    const user = await User.findById(userId).orFail(() => errorNotFound());
     return goodResponse(res, user);
   } catch (err) {
     return checkErrors(err, res);
@@ -39,7 +38,7 @@ export const updateAvatar = async (req: Request, res: Response) => {
   const newAvatar = req.body.avatar;
   try {
     const user = await User.findByIdAndUpdate(
-      new ObjectId(idUserProfile),
+      idUserProfile,
       { avatar: newAvatar },
       { new: true, runValidators: true },
     ).orFail(() => {
@@ -59,7 +58,7 @@ export const updateProfile = async (req: Request, res: Response) => {
   const newAbout = req.body.about;
   try {
     const user = await User.findByIdAndUpdate(
-      new ObjectId(idUserProfile),
+      idUserProfile,
       { name: newName, about: newAbout },
       { new: true, runValidators: true },
     ).orFail(() => {
