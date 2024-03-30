@@ -62,7 +62,7 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   if (err instanceof ErrorMongoose && err.name === 'ValidationError') {
     return badRequestError(res);
   }
-  if (err instanceof mongoose.Error.CastError && err.name === 'CastError') {
+  if (err instanceof mongoose.Error.CastError) {
     return notFoundError(res);
   }
   if (err instanceof Error && err.name === errorTypes.NOT_FOUND.name) {
