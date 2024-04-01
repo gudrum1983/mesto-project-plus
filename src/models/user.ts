@@ -1,5 +1,8 @@
 import mongoose, { Schema } from 'mongoose';
 import isEmail from 'validator/lib/isEmail';
+import { errorNotFound } from '../utils/constants';
+
+const bcrypt = require('bcrypt');
 
 export interface IUser {
   name: string;
@@ -9,7 +12,11 @@ export interface IUser {
   password: string;
 }
 
-export const userSchema = new Schema<IUser>(
+interface UserModel extends mongoose.Model<IUser> {
+  findUserByCredentials: (email: string, password: string) => Promise<mongoose.Document<unknown, any, IUser>>
+}
+
+export const userSchema = new Schema<IUser, UserModel>(
   {
     name: {
       type: String,
@@ -46,4 +53,20 @@ export const userSchema = new Schema<IUser>(
   // {versionKey: false, timestamps: true}
 );
 
-export default mongoose.model<IUser>('user', userSchema);
+userSchema.static('findUserByCredentials', async function findUserByCredentials(email: string, password: string) {
+  const user = await this.findOne({ email });
+
+  if (!user) {
+    throw new Error('Неправильные почта или пароль');
+  }
+
+  const matched = await bcrypt.compare(password, user.password);
+
+  if (!matched) {
+    throw new Error('Неправильные почта или пароль');
+  }
+
+  return user; // теперь user доступен
+});
+
+export default mongoose.model<IUser, UserModel>('user', userSchema);

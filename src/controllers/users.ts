@@ -1,12 +1,35 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import {
-  checkErrors, createDocument, errorNotFound, errorTypes, goodResponse,
+  checkErrors, createDocument, errorNotFound, errorTypes, goodResponse, unauthorized,
 } from '../utils/constants';
 
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
+
+export const login = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const { email, password } = req.body;
+  try {
+    // throw new Error('test');
+    const user = await User.findUserByCredentials(email, password);
+    const token = jwt.sign({ _id: userId }, 'user-secret-token', { expiresIn: '7d' });
+    // отправим токен, браузер сохранит его в куках
+    res
+      .cookie('jwt', token, {
+        // token - наш JWT токен, который мы отправляем
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+      });
+    // todo - обработать ответ и ошибку
+    return goodResponse(res, user);
+  } catch (err) {
+    return unauthorized(res);
+  }
+};
+
 export const getUsers = async (req: Request, res: Response) => {
   try {
     // throw new Error('test');

@@ -9,7 +9,7 @@ type TError = {
   alt: string,
 };
 
-type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BAD_REQUEST' | 'CONFLICT_CREATE';
+type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BAD_REQUEST' | 'CONFLICT_CREATE' | 'UNAUTHORIZED';
 
 export const errorTypes: Record<Name, TError> = {
   NOT_FOUND: {
@@ -32,9 +32,15 @@ export const errorTypes: Record<Name, TError> = {
   },
   BAD_REQUEST: {
     message: 'Переданы некорректные данные',
-    name: 'BSONError',
+    name: 'BAD_REQUEST',
     status: constants.HTTP_STATUS_BAD_REQUEST,
     alt: '400',
+  },
+  UNAUTHORIZED: {
+    message: 'Не хватает действительных учётных данных',
+    name: 'UNAUTHORIZED',
+    status: constants.HTTP_STATUS_UNAUTHORIZED,
+    alt: '401',
   },
 };
 
@@ -42,6 +48,9 @@ const defaultError = (res: Response) => {
   res.status(errorTypes.SERVER_ERROR.status).send({ message: errorTypes.SERVER_ERROR.message });
 };
 
+export const unauthorized = (res: Response) => {
+  res.status(errorTypes.UNAUTHORIZED.status).send({ message: errorTypes.UNAUTHORIZED.message });
+};
 const notFoundError = (res: Response) => {
   res.status(errorTypes.NOT_FOUND.status).send({ message: errorTypes.NOT_FOUND.message });
 };
