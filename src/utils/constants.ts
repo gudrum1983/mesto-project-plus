@@ -9,7 +9,7 @@ type TError = {
   alt: string,
 };
 
-type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BAD_REQUEST';
+type Name = 'NOT_FOUND' | 'SERVER_ERROR' | 'BAD_REQUEST' | 'CONFLICT_CREATE';
 
 export const errorTypes: Record<Name, TError> = {
   NOT_FOUND: {
@@ -17,6 +17,12 @@ export const errorTypes: Record<Name, TError> = {
     name: 'NOT_FOUND',
     status: constants.HTTP_STATUS_BAD_REQUEST,
     alt: '404',
+  },
+  CONFLICT_CREATE: {
+    message: 'Конфликт создания сущности в БД',
+    name: 'CONFLICT_CREATE',
+    status: constants.HTTP_STATUS_CONFLICT,
+    alt: '409',
   },
   SERVER_ERROR: {
     message: 'Произошла непредвиденная ошибка на сервере',
@@ -38,6 +44,12 @@ const defaultError = (res: Response) => {
 
 const notFoundError = (res: Response) => {
   res.status(errorTypes.NOT_FOUND.status).send({ message: errorTypes.NOT_FOUND.message });
+};
+
+const conflictCreateError = (res: Response) => {
+  res
+    .status(errorTypes.CONFLICT_CREATE.status)
+    .send({ message: errorTypes.CONFLICT_CREATE.message });
 };
 
 const badRequestError = (res: Response) => {
@@ -64,6 +76,9 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   }
   if (err instanceof mongoose.Error.CastError) {
     return notFoundError(res);
+  }
+  if (err instanceof Error && err.message.startsWith('E11000')) {
+    return conflictCreateError(res);
   }
   if (err instanceof Error && err.name === errorTypes.NOT_FOUND.name) {
     return notFoundError(res);

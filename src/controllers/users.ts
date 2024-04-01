@@ -4,6 +4,9 @@ import {
   checkErrors, createDocument, errorNotFound, errorTypes, goodResponse,
 } from '../utils/constants';
 
+const bcrypt = require('bcrypt');
+
+const saltRounds = 10;
 export const getUsers = async (req: Request, res: Response) => {
   try {
     // throw new Error('test');
@@ -26,13 +29,19 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const newUser = await new User(req.body).save();
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hash = bcrypt.hashSync(password, salt);
+    const newUser = await new User({
+      email, name, about, avatar, password: hash,
+    }).save();
     return createDocument(res, newUser);
   } catch (err) {
     return checkErrors(err, res);
   }
 };
-
 export const updateAvatar = async (req: Request, res: Response) => {
   const idUserProfile = req.user._id;
   const newAvatar = req.body.avatar;
