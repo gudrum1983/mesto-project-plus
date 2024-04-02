@@ -4,6 +4,7 @@ import { unauthorized } from '../utils/constants';
 
 const extractBearerToken = (header: string) => header.replace('Bearer ', '');
 
+// eslint-disable-next-line consistent-return
 export default (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
 
@@ -20,7 +21,7 @@ export default (req: Request, res: Response, next: NextFunction) => {
     return unauthorized(res);
   }
 
-  req.user._id = payload; // записываем пейлоуд в объект запроса
+  req.user._id = payload; // записываем payload в объект запроса
 
   next(); // пропускаем запрос дальше
 };
