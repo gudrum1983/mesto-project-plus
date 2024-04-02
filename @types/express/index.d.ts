@@ -1,10 +1,11 @@
 import { ObjectId } from 'mongodb';
+import { JwtPayload } from 'jsonwebtoken';
 
 declare global {
   namespace Express {
     interface Request {
       user: {
-        _id: string | ObjectId
+        _id: string | ObjectId | JwtPayload
       }
     }
   }

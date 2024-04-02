@@ -10,12 +10,11 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 export const login = async (req: Request, res: Response) => {
-  const userId = req.user._id;
   const { email, password } = req.body;
   try {
     // throw new Error('test');
     const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: userId }, 'user-secret-token', { expiresIn: '7d' });
+    const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
     // отправим токен, браузер сохранит его в куках
     res
       .cookie('jwt', token, {
@@ -66,7 +65,7 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 export const updateAvatar = async (req: Request, res: Response) => {
-  const idUserProfile = req.user._id;
+  const idUserProfile = req.user!._id;
   const newAvatar = req.body.avatar;
   try {
     const user = await User.findByIdAndUpdate(

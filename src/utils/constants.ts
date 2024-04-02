@@ -37,7 +37,7 @@ export const errorTypes: Record<Name, TError> = {
     alt: '400',
   },
   UNAUTHORIZED: {
-    message: 'Не хватает действительных учётных данных',
+    message: 'Необходима авторизация',
     name: 'UNAUTHORIZED',
     status: constants.HTTP_STATUS_UNAUTHORIZED,
     alt: '401',
