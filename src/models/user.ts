@@ -1,6 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
 import isEmail from 'validator/lib/isEmail';
-import { errorNotFound } from '../utils/constants';
 
 const bcrypt = require('bcrypt');
 
@@ -13,7 +12,9 @@ export interface IUser {
 }
 
 interface UserModel extends mongoose.Model<IUser> {
-  findUserByCredentials: (email: string, password: string) => Promise<mongoose.Document<unknown, any, IUser>>
+  // eslint-disable-next-line no-unused-vars
+  findUserByCredentials: (email: string, password: string) =>
+    Promise<mongoose.Document<unknown, any, IUser>>
 }
 
 export const userSchema = new Schema<IUser, UserModel>(

@@ -49,6 +49,16 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
+export const getUserMe = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).orFail(() => errorNotFound());
+    return goodResponse(res, user);
+  } catch (err) {
+    return checkErrors(err, res);
+  }
+};
+
 export const createUser = async (req: Request, res: Response) => {
   try {
     const {

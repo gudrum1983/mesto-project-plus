@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  createUser, getUserById, getUsers, updateAvatar, updateProfile,
+  createUser, getUserById, getUserMe, getUsers, updateAvatar, updateProfile,
 } from '../controllers/users';
 
 const userRouter = Router();
@@ -10,5 +10,5 @@ userRouter.get('/:userId', getUserById); // вернуть пользовате�
 userRouter.post('/', createUser); // создать пользователя
 userRouter.patch('/me', updateProfile); // обновить профиль
 userRouter.patch('/me/avatar', updateAvatar); // обновить аватар
-
+userRouter.patch('/me', getUserMe); // обновить профиль
 export default userRouter;
