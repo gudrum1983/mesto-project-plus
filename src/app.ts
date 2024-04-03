@@ -8,7 +8,7 @@ import { validateCreateUser, validateLogin } from './middlewares/validate';
 
 const { errors } = require('celebrate');
 
-type IError = Error & { statusCode: number };
+type IError = Error & { statusCode: number, code?:number };
 
 const { PORT = 3000, MONGO_URL = 'mongodb://127.0.0.1' } = process.env;
 const app = express();
@@ -26,10 +26,15 @@ app.use(router);
 app.use(errorLogger); // подключаем логер ошибок
 
 app.use(errors()); // обработчик ошибок celebrate
-
+// todo - вынести обработчик ошибок отдельно
 // централизованный обработчик ошибок
 app.use((err: IError, req: Request, res: Response, next: NextFunction) => {
-  const { statusCode = 500, message } = err;
+  const { statusCode = 500, message, code = '' } = err;
+  if (err.code === 11000) {
+    res
+      .status(409)
+      .send({ message: 'Пользователь с таким email уже существует' });
+  }
   res
     .status(statusCode)
     .send({
