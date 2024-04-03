@@ -1,80 +1,69 @@
-import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { NextFunction, Request, Response } from 'express';
 import User from '../models/user';
-import {
-  checkErrors, createDocument, errorNotFound, errorTypes, goodResponse, unauthorized,
-} from '../utils/constants';
+import { createDocument, errorNotFound, goodResponse } from '../utils/constants';
+import { generateToken } from '../utils/jwt';
 
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
+const maxAge = 3600000 * 24 * 7;
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   try {
-    // throw new Error('test');
     const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+    const id = user.id || '';
+    const token = generateToken({ id });
     // отправим токен, браузер сохранит его в куках
     res
-      .cookie('jwt', token, {
-        // token - наш JWT токен, который мы отправляем
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-      });
+      .cookie('jwt', token, { maxAge, httpOnly: true });
     // todo - обработать ответ и ошибку
     return goodResponse(res, user);
   } catch (err) {
-    return unauthorized(res);
+    return next(err);
   }
 };
 
-export const getUsers = async (req: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // throw new Error('test');
     const users = await User.find({});
     return goodResponse(res, users);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+const getUser = async (userId: string, res: Response, next: NextFunction) => {
   try {
-    const { userId } = req.params;
     const user = await User.findById(userId).orFail(() => errorNotFound());
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const getUserMe = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user._id;
-    const user = await User.findById(userId).orFail(() => errorNotFound());
-    return goodResponse(res, user);
-  } catch (err) {
-    return checkErrors(err, res);
-  }
+export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.params;
+  return getUser(userId, res, next);
 };
 
-export const createUser = async (req: Request, res: Response) => {
+export const getUserMe = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user.id;
+  return getUser(userId, res, next);
+};
+
+export const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {
-      name, about, avatar, email, password,
-    } = req.body;
+    const { name, about, avatar, email, password } = req.body;
     const salt = bcrypt.genSaltSync(saltRounds);
     const hash = bcrypt.hashSync(password, salt);
-    const newUser = await new User({
-      email, name, about, avatar, password: hash,
-    }).save();
+    const newUser = await new User({ email, name, about, avatar, password: hash }).save();
     return createDocument(res, newUser);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
-export const updateAvatar = async (req: Request, res: Response) => {
+export const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
   const idUserProfile = req.user!._id;
   const newAvatar = req.body.avatar;
   try {
@@ -82,19 +71,15 @@ export const updateAvatar = async (req: Request, res: Response) => {
       idUserProfile,
       { avatar: newAvatar },
       { new: true, runValidators: true },
-    ).orFail(() => {
-      const error = new Error();
-      error.name = errorTypes.NOT_FOUND.name;
-      return error;
-    });
+    ).orFail(() => errorNotFound());
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
-  const idUserProfile = req.user._id;
+export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
+  const idUserProfile = req.user.id;
   const newName = req.body.name;
   const newAbout = req.body.about;
   try {
@@ -102,13 +87,9 @@ export const updateProfile = async (req: Request, res: Response) => {
       idUserProfile,
       { name: newName, about: newAbout },
       { new: true, runValidators: true },
-    ).orFail(() => {
-      const error = new Error();
-      error.name = errorTypes.NOT_FOUND.name;
-      return error;
-    });
+    ).orFail(() => errorNotFound());
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
