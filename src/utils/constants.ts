@@ -1,8 +1,14 @@
 import { constants } from 'http2';
 import { Response } from 'express';
-import mongoose, { Error as ErrorMongoose } from 'mongoose';
+import { JwtPayload, VerifyErrors } from 'jsonwebtoken';
 
-type TError = {
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const InternalServerError = require('../errors/internal-server-error');
+const ConflictCreateError = require('../errors/conflict-create-error');
+const UnauthorizedError = require('../errors/unauthorized-error');
+
+/* type TError = {
   message: string,
   name: string,
   status: number,
@@ -42,27 +48,32 @@ export const errorTypes: Record<Name, TError> = {
     status: constants.HTTP_STATUS_UNAUTHORIZED,
     alt: '401',
   },
+}; */
+
+export const defaultError = (message?: string) => {
+  throw new InternalServerError(message);
 };
 
-const defaultError = (res: Response) => {
-  res.status(errorTypes.SERVER_ERROR.status).send({ message: errorTypes.SERVER_ERROR.message });
+export const unauthorized = (message?: string) => {
+  throw new UnauthorizedError(message);
+};
+export const errorNotFound = (message?: string) => {
+  throw new NotFoundError(message);
 };
 
-export const unauthorized = (res: Response) => {
-  res.status(errorTypes.UNAUTHORIZED.status).send({ message: errorTypes.UNAUTHORIZED.message });
-};
-const notFoundError = (res: Response) => {
-  res.status(errorTypes.NOT_FOUND.status).send({ message: errorTypes.NOT_FOUND.message });
+export const conflictCreateError = (res: Response) => {
+  throw new ConflictCreateError();
 };
 
-const conflictCreateError = (res: Response) => {
-  res
-    .status(errorTypes.CONFLICT_CREATE.status)
-    .send({ message: errorTypes.CONFLICT_CREATE.message });
+export const badRequestError = (res: Response) => {
+  throw new BadRequestError();
 };
 
-const badRequestError = (res: Response) => {
-  res.status(errorTypes.BAD_REQUEST.status).send({ message: errorTypes.BAD_REQUEST.message });
+export const JsonWebToken = (err: Error | VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
+  if (err && err.message === 'JsonWebToken') {
+    return unauthorized('Токен протух');
+  }
+  return decoded;
 };
 
 export const goodResponse = <T>(res: Response, data: T) => {
@@ -73,13 +84,7 @@ export const createDocument = <T>(res: Response, data: T) => {
   res.status(constants.HTTP_STATUS_CREATED).send(data);
 };
 
-export const errorNotFound = () => {
-  const error: Error = new Error();
-  error.name = errorTypes.NOT_FOUND.name;
-  return error;
-};
-
-export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response) {
+/* export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response) {
   if (err instanceof ErrorMongoose && err.name === 'ValidationError') {
     return badRequestError(res);
   }
@@ -92,5 +97,14 @@ export function checkErrors(err: ErrorMongoose | Error | unknown, res: Response)
   if (err instanceof Error && err.name === errorTypes.NOT_FOUND.name) {
     return notFoundError(res);
   }
+  if (err instanceof Error && err.message === 'NotAuth') {
+    return res.status(401).send({ message: 'Неправильный пароль или емайл' });
+  }
+  if (err instanceof Error && err.name === 'JsonWebToken') {
+    return res.status(401).send({ message: 'С токеном что-то не так' });
+  }
+  /!*  if (err.code === 11000) {
+      return res.status(409).send({ message: 'Такой пользователь уже существует' });
+    } *!/
   return defaultError(res);
-}
+} */

@@ -12,9 +12,8 @@ export interface IUser {
 }
 
 interface UserModel extends mongoose.Model<IUser> {
-  // eslint-disable-next-line no-unused-vars
   findUserByCredentials: (email: string, password: string) =>
-    Promise<mongoose.Document<unknown, any, IUser>>
+    Promise<mongoose.Document<string, any, IUser>>
 }
 
 export const userSchema = new Schema<IUser, UserModel>(
@@ -47,6 +46,7 @@ export const userSchema = new Schema<IUser, UserModel>(
     password: {
       type: String,
       required: true,
+      select: false, // необходимо добавить поле select
     },
   },
   { versionKey: false },
@@ -55,7 +55,7 @@ export const userSchema = new Schema<IUser, UserModel>(
 );
 
 userSchema.static('findUserByCredentials', async function findUserByCredentials(email: string, password: string) {
-  const user = await this.findOne({ email });
+  const user = await this.findOne({ email }).select('+password');
 
   if (!user) {
     throw new Error('Неправильные почта или пароль');
