@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import isEmail from 'validator/lib/isEmail';
+import isURL from 'validator/lib/isURL';
 
 const bcrypt = require('bcrypt');
 
@@ -33,6 +34,10 @@ export const userSchema = new Schema<IUser, UserModel>(
     avatar: {
       type: String,
       default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+      validate: {
+        validator: (v: string) => isURL(v),
+        message: 'Неправильный формат ссылки на картинку аватара',
+      },
     },
     email: {
       type: String,

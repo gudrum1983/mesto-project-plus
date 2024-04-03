@@ -1,6 +1,6 @@
-import { constants } from 'http2';
+const { constants } = require('http2');
 
-class BadRequestError extends Error {
+export default class BadRequestError extends Error {
   statusCode: number;
 
   constructor(message = 'Сообщение по умолчанию - Переданы некорректные данные') {
@@ -8,5 +8,3 @@ class BadRequestError extends Error {
     this.statusCode = constants.HTTP_STATUS_BAD_REQUEST;
   }
 }
-
-module.exports = BadRequestError;

@@ -1,12 +1,19 @@
-import { constants } from 'http2';
 import { Response } from 'express';
 import { JwtPayload, VerifyErrors } from 'jsonwebtoken';
+import BadRequestError from '../errors/bad-request-error';
+import NotFoundError from '../errors/not-found-error';
+import InternalServerError from '../errors/internal-server-error';
+import ConflictCreateError from '../errors/conflict-create-error';
+import UnauthorizedError from '../errors/unauthorized-error';
+import { TDecoded } from './jwt';
 
-const NotFoundError = require('../errors/not-found-error');
-const BadRequestError = require('../errors/bad-request-error');
-const InternalServerError = require('../errors/internal-server-error');
-const ConflictCreateError = require('../errors/conflict-create-error');
-const UnauthorizedError = require('../errors/unauthorized-error');
+const { constants } = require('http2');
+
+// const NotFoundError = require('../errors/not-found-error');
+// const BadRequestError = require('../errors/bad-request-error');
+// const InternalServerError = require('../errors/internal-server-error');
+// const ConflictCreateError = require('../errors/conflict-create-error');
+// const UnauthorizedError = require('../errors/unauthorized-error');
 
 /* type TError = {
   message: string,
@@ -69,7 +76,7 @@ export const badRequestError = (res: Response) => {
   throw new BadRequestError();
 };
 
-export const JsonWebToken = (err: Error | VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
+export const JsonWebToken = (err: VerifyErrors | null, decoded: TDecoded) => {
   if (err && err.message === 'JsonWebToken') {
     return unauthorized('Токен протух');
   }
