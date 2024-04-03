@@ -20,7 +20,8 @@ app.use(requestLogger); // подключаем логер запросов
 
 app.post('/signin', validateLogin, login);
 app.post('/signup', validateCreateUser, createUser);
-// авторизация
+
+app.use(router);
 
 app.use(errorLogger); // подключаем логер ошибок
 
@@ -50,7 +51,5 @@ async function connect() {
     console.log(err);
   }
 }
-
-app.use(router);
 
 connect();

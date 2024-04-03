@@ -1,14 +1,15 @@
 import { Response } from 'express';
 import { JwtPayload, VerifyErrors } from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import BadRequestError from '../errors/bad-request-error';
 import NotFoundError from '../errors/not-found-error';
 import InternalServerError from '../errors/internal-server-error';
 import ConflictCreateError from '../errors/conflict-create-error';
 import UnauthorizedError from '../errors/unauthorized-error';
-import { TDecoded } from './jwt';
 
 const { constants } = require('http2');
 
+export type TDecoded = string | jwt.JwtPayload | undefined
 // const NotFoundError = require('../errors/not-found-error');
 // const BadRequestError = require('../errors/bad-request-error');
 // const InternalServerError = require('../errors/internal-server-error');
