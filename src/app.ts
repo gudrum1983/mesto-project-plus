@@ -4,6 +4,7 @@ import * as process from 'process';
 import router from './routes';
 import { createUser, login } from './controllers/users';
 import { requestLogger, errorLogger } from './middlewares/logger';
+import { validateCreateUser, validateLogin } from './middlewares/validate';
 
 const { errors } = require('celebrate');
 
@@ -17,13 +18,13 @@ app.use(express.urlencoded({ extended: true })); // для приёма веб-�
 
 app.use(requestLogger); // подключаем логер запросов
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.post('/signin', validateLogin, login);
+app.post('/signup', validateCreateUser, createUser);
 // авторизация
 
 app.use(errorLogger); // подключаем логер ошибок
 
-/* app.use(errors()); // обработчик ошибок celebrate */
+app.use(errors()); // обработчик ошибок celebrate
 
 // централизованный обработчик ошибок
 app.use((err: IError, req: Request, res: Response, next: NextFunction) => {

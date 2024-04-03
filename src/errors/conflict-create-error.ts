@@ -1,6 +1,6 @@
-import { constants } from 'http2';
+const { constants } = require('http2');
 
-class ConflictCreateError extends Error {
+export default class ConflictCreateError extends Error {
   statusCode: number;
 
   constructor(message = 'Сообщение по умолчанию - Конфликт создания сущности в БД') {
@@ -8,5 +8,3 @@ class ConflictCreateError extends Error {
     this.statusCode = constants.HTTP_STATUS_CONFLICT;
   }
 }
-
-module.exports = ConflictCreateError;

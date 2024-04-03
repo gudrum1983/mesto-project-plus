@@ -1,6 +1,6 @@
-import { constants } from 'http2';
+const { constants } = require('http2');
 
-class UnauthorizedError extends Error {
+export default class UnauthorizedError extends Error {
   statusCode: number;
 
   constructor(message = 'Сообщение по умолчанию - Необходима авторизация') {
@@ -8,5 +8,3 @@ class UnauthorizedError extends Error {
     this.statusCode = constants.HTTP_STATUS_UNAUTHORIZED;
   }
 }
-
-module.exports = UnauthorizedError;
