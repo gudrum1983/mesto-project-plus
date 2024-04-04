@@ -9,4 +9,5 @@ cardsRouter.post('/', validateCreateCard, createCard); // создать кар�
 cardsRouter.delete('/:cardId', validateCardId, remoteCard); // удалить карточку по ИД
 cardsRouter.put('/:cardId/likes', validateCardId, likeCard); // поставить лайк
 cardsRouter.delete('/:cardId/likes', validateCardId, dislikeCard); // убрать лайк
+
 export default cardsRouter;

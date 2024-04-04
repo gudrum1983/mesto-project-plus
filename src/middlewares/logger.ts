@@ -23,7 +23,7 @@ const transportRequest = new winston.transports.DailyRotateFile({
   maxFiles: 14,
 });
 
-// создадим логер запросов
+// логер запросов
 export const requestLogger = expressWinston.logger({
   transports: [
     new winston.transports.Console({ format: winston.format.simple() }),

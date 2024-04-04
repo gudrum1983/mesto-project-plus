@@ -1,6 +1,6 @@
 const { constants } = require('http2');
 
-export default class NotFoundError extends Error {
+class NotFoundError extends Error {
   statusCode: number;
 
   constructor(message = 'Сообщение по умолчанию - Запрашиваемые вами данные не найдены') {
@@ -8,3 +8,7 @@ export default class NotFoundError extends Error {
     this.statusCode = constants.HTTP_STATUS_NOT_FOUND;
   }
 }
+
+export default (message?: string) => {
+  throw new NotFoundError(message);
+};

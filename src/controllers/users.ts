@@ -1,12 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../models/user';
-import { createDocument, errorNotFound, goodResponse } from '../utils/constants';
+import { createDocumentResponse, goodResponse, isValidError } from '../utils/constants';
 import { generateToken } from '../utils/jwt';
+import ConflictCreateError from '../errors/conflict-create-error';
+import { ERROR_MESSAGE } from '../utils/textErrorType';
+import throwErrorNotFound from '../errors/not-found-error';
 
 const bcrypt = require('bcrypt');
 
-const saltRounds = 10;
-const maxAge = 3600000 * 24 * 7;
+const NAME_DUPLIKATE_KEY_ERROR_INDEX = 'E11000';
+const NAME_JWT = 'jwt';
+const BCRYPT_SALT = 10;
+const SEVEN_DAYS = 3600000 * 24 * 7;
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
@@ -14,10 +19,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const user = await User.findUserByCredentials(email, password);
     const id = user.id || '';
     const token = generateToken({ id });
-    // отправим токен, браузер сохранит его в куках
     res
-      .cookie('jwt', token, { maxAge, httpOnly: true });
-    // todo - обработать ответ и ошибку
+      .cookie(NAME_JWT, token, { maxAge: SEVEN_DAYS, httpOnly: true });
     return goodResponse(res, user);
   } catch (err) {
     return next(err);
@@ -35,7 +38,9 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 
 const getUser = async (userId: string, res: Response, next: NextFunction) => {
   try {
-    const user = await User.findById(userId).orFail(() => errorNotFound());
+    const user = await User
+      .findById(userId)
+      .orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
     return next(err);
@@ -55,12 +60,18 @@ export const getUserMe = async (req: Request, res: Response, next: NextFunction)
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, about, avatar, email, password } = req.body;
-    const salt = bcrypt.genSaltSync(saltRounds);
+    const salt = bcrypt.genSaltSync(BCRYPT_SALT);
     const hash = bcrypt.hashSync(password, salt);
     const newUser = await new User({ email, name, about, avatar, password: hash }).save();
-    return createDocument(res, newUser);
+    return createDocumentResponse(res, newUser);
   } catch (err) {
-    return next(err);
+    // Проверяем, является ли ошибка ошибкой создания сущности
+    if (err instanceof Error && err.message.startsWith(NAME_DUPLIKATE_KEY_ERROR_INDEX)) {
+      const conflictError = new ConflictCreateError(ERROR_MESSAGE.conflictCreateUser);
+      return next(conflictError);
+    }
+    // Проверяем, является ли ошибка ошибкой валидации Mongoose
+    return next(isValidError(err) || err);
   }
 };
 export const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
@@ -71,7 +82,7 @@ export const updateAvatar = async (req: Request, res: Response, next: NextFuncti
       idUserProfile,
       { avatar: newAvatar },
       { new: true, runValidators: true },
-    ).orFail(() => errorNotFound());
+    ).orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
     return next(err);
@@ -87,7 +98,7 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
       idUserProfile,
       { name: newName, about: newAbout },
       { new: true, runValidators: true },
-    ).orFail(() => errorNotFound());
+    ).orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
     return next(err);

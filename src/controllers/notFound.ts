@@ -1,5 +1,5 @@
-import { errorNotFound } from '../utils/constants';
+import throwErrorNotFound from '../errors/not-found-error';
 
 export default () => {
-  errorNotFound('Данной страницы не существует');
+  throwErrorNotFound('Данной страницы не существует');
 };

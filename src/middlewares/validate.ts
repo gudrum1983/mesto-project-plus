@@ -1,5 +1,5 @@
 import { celebrate } from 'celebrate';
-import * as Schemas from './shemasJoi';
+import * as Schemas from '../utils/shemas-joi';
 
 export const validateCreateUser = celebrate({ body: Schemas.createUserSchema });
 export const validateLogin = celebrate({ body: Schemas.loginSchema });

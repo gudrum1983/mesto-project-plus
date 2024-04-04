@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import isURL from 'validator/lib/isURL';
+import { ERROR_MESSAGE } from '../utils/textErrorType';
 
 interface ICard {
   name: string;
@@ -14,22 +15,22 @@ export const cardSchema = new Schema<ICard>(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, ERROR_MESSAGE.nameIsRequired],
       minlength: 2,
       maxlength: 30,
     },
     link: {
       type: String,
-      required: true,
+      required: [true, ERROR_MESSAGE.linkIsRequired],
       validate: {
         validator: (v: string) => isURL(v),
-        message: 'Неправильный формат ссылки на картинку',
+        message: ERROR_MESSAGE.incorrectLinkCard,
       },
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
-      required: true,
+      required: [true, ERROR_MESSAGE.ownerIsRequired],
     },
     likes: {
       type: [{ type: Schema.Types.ObjectId, ref: 'user' }],

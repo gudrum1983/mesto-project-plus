@@ -9,4 +9,5 @@ userRouter.get('/:userId', validateUserId, getUserById); // вернуть по�
 userRouter.patch('/me', validateUpdateUser, updateProfile); // обновить профиль
 userRouter.patch('/me/avatar', validateUpdateAvatar, updateAvatar); // обновить аватар
 userRouter.patch('/me', getUserMe); // получить данные о себе
+
 export default userRouter;
