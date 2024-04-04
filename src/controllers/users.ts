@@ -1,59 +1,96 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import User from '../models/user';
-import {
-  checkErrors, createDocument, errorNotFound, errorTypes, goodResponse,
-} from '../utils/constants';
+import { createDocumentResponse, goodResponse, isValidError } from '../utils/constants';
+import { generateToken } from '../utils/jwt';
+import ConflictCreateError from '../errors/conflict-create-error';
+import { ERROR_MESSAGE } from '../utils/textErrorType';
+import throwErrorNotFound from '../errors/not-found-error';
 
-export const getUsers = async (req: Request, res: Response) => {
+const bcrypt = require('bcrypt');
+
+const NAME_DUPLIKATE_KEY_ERROR_INDEX = 'E11000';
+const NAME_JWT = 'jwt';
+const BCRYPT_SALT = 10;
+const SEVEN_DAYS = 3600000 * 24 * 7;
+
+export const login = async (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
   try {
-    // throw new Error('test');
+    const user = await User.findUserByCredentials(email, password);
+    const id = user.id || '';
+    const token = generateToken({ id });
+    res
+      .cookie(NAME_JWT, token, { maxAge: SEVEN_DAYS, httpOnly: true });
+    return goodResponse(res, user);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
     const users = await User.find({});
     return goodResponse(res, users);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+const getUser = async (userId: string, res: Response, next: NextFunction) => {
   try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).orFail(() => errorNotFound());
+    const user = await User
+      .findById(userId)
+      .orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const createUser = async (req: Request, res: Response) => {
+export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.params;
+  return getUser(userId, res, next);
+};
+
+export const getUserMe = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user.id;
+  return getUser(userId, res, next);
+};
+
+export const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const newUser = await new User(req.body).save();
-    return createDocument(res, newUser);
+    const { name, about, avatar, email, password } = req.body;
+    const salt = bcrypt.genSaltSync(BCRYPT_SALT);
+    const hash = bcrypt.hashSync(password, salt);
+    const newUser = await new User({ email, name, about, avatar, password: hash }).save();
+    return createDocumentResponse(res, newUser);
   } catch (err) {
-    return checkErrors(err, res);
+    // Проверяем, является ли ошибка ошибкой создания сущности
+    if (err instanceof Error && err.message.startsWith(NAME_DUPLIKATE_KEY_ERROR_INDEX)) {
+      const conflictError = new ConflictCreateError(ERROR_MESSAGE.conflictCreateUser);
+      return next(conflictError);
+    }
+    // Проверяем, является ли ошибка ошибкой валидации Mongoose
+    return next(isValidError(err) || err);
   }
 };
-
-export const updateAvatar = async (req: Request, res: Response) => {
-  const idUserProfile = req.user._id;
+export const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
+  const idUserProfile = req.user!._id;
   const newAvatar = req.body.avatar;
   try {
     const user = await User.findByIdAndUpdate(
       idUserProfile,
       { avatar: newAvatar },
       { new: true, runValidators: true },
-    ).orFail(() => {
-      const error = new Error();
-      error.name = errorTypes.NOT_FOUND.name;
-      return error;
-    });
+    ).orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
-  const idUserProfile = req.user._id;
+export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
+  const idUserProfile = req.user.id;
   const newName = req.body.name;
   const newAbout = req.body.about;
   try {
@@ -61,13 +98,9 @@ export const updateProfile = async (req: Request, res: Response) => {
       idUserProfile,
       { name: newName, about: newAbout },
       { new: true, runValidators: true },
-    ).orFail(() => {
-      const error = new Error();
-      error.name = errorTypes.NOT_FOUND.name;
-      return error;
-    });
+    ).orFail(() => throwErrorNotFound(ERROR_MESSAGE.notFoundByIdUser));
     return goodResponse(res, user);
   } catch (err) {
-    return checkErrors(err, res);
+    return next(err);
   }
 };

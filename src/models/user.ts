@@ -1,28 +1,68 @@
 import mongoose, { Schema } from 'mongoose';
+import isEmail from 'validator/lib/isEmail';
+import isURL from 'validator/lib/isURL';
+import UnauthorizedError from '../errors/unauthorized-error';
+import { ERROR_MESSAGE } from '../utils/textErrorType';
+
+const bcrypt = require('bcrypt');
+
+const DEFAULT_NAME = 'Жак-Ив Кусто';
+const DEFAULT_ABOUT = 'Исследователь';
+const DEFAULT_AVATAR = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png';
 
 export interface IUser {
   name: string;
   about: string;
   avatar: string;
+  email: string;
+  password: string;
 }
 
-export const userSchema = new Schema<IUser>(
+interface UserModel extends mongoose.Model<IUser> {
+  findUserByCredentials: (email: string, password: string) =>
+    Promise<mongoose.Document<string, any, IUser>>
+}
+
+export const userSchema = new Schema<IUser, UserModel>(
   {
     name: {
       type: String,
-      required: true,
+      default: DEFAULT_NAME,
       minlength: 2,
       maxlength: 30,
     },
     about: {
       type: String,
-      required: true,
+      default: DEFAULT_ABOUT,
       minlength: 2,
       maxlength: 200,
     },
     avatar: {
       type: String,
-      required: true,
+      default: DEFAULT_AVATAR,
+      validate: {
+        validator: (v: string) => isURL(v, {
+          protocols: ['http', 'https'], // Требуются протоколы http или https
+          require_protocol: true, // URL должен содержать протокол
+          require_valid_protocol: true, // Требуется валидный протокол
+          require_tld: true, // Требуется наличие доменной зоны (TLD)
+        }),
+        message: ERROR_MESSAGE.incorrectLinkAvatar,
+      },
+    },
+    email: {
+      type: String,
+      required: [true, ERROR_MESSAGE.emailIsRequired],
+      unique: true,
+      validate: {
+        validator: (v: string) => isEmail(v),
+        message: ERROR_MESSAGE.incorrectEmail,
+      },
+    },
+    password: {
+      type: String,
+      required: [true, ERROR_MESSAGE.passwordIsRequired],
+      select: false, // необходимо добавить поле select
     },
   },
   { versionKey: false },
@@ -30,4 +70,20 @@ export const userSchema = new Schema<IUser>(
   // {versionKey: false, timestamps: true}
 );
 
-export default mongoose.model<IUser>('user', userSchema);
+userSchema.static('findUserByCredentials', async function findUserByCredentials(email: string, password: string) {
+  const currentUser = await this.findOne({ email }).select('+password');
+
+  if (!currentUser) {
+    throw new UnauthorizedError(ERROR_MESSAGE.incorrectEmailPassword);
+  }
+
+  const matched = await bcrypt.compare(password, currentUser.password);
+
+  if (!matched) {
+    throw new Error(ERROR_MESSAGE.incorrectEmailPassword);
+  }
+
+  return currentUser; // теперь currentUser доступен
+});
+
+export default mongoose.model<IUser, UserModel>('user', userSchema);
