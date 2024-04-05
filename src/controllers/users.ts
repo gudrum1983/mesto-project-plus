@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import User from '../models/user';
+import mongoose, { ObjectId } from 'mongoose';
+import User, { IUser } from '../models/user';
 import { createDocumentResponse, goodResponse, isValidError } from '../utils/constants';
 import { generateToken } from '../utils/jwt';
 import ConflictCreateError from '../errors/conflict-create-error';
@@ -13,6 +14,13 @@ const NAME_JWT = 'jwt';
 const BCRYPT_SALT = 10;
 const SEVEN_DAYS = 3600000 * 24 * 7;
 
+const publicInfoUser = (currentUser: mongoose.Document
+  | mongoose.Document & Omit<IUser & { _id: ObjectId; }, never>) => {
+  const userObj = currentUser.toObject();
+  const { password, _id, ...other } = userObj;
+  return other;
+};
+
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   try {
@@ -21,9 +29,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const token = generateToken({ id });
     res
       .cookie(NAME_JWT, token, { maxAge: SEVEN_DAYS, httpOnly: true });
-    const userObj = user.toObject();
-    const { password: passwordFromUser, _id, ...other } = userObj;
-    return goodResponse(res, { message: 'Вы успешно вошли в систему', data: other });
+    const infoUser = publicInfoUser(user);
+    return goodResponse(res, { message: 'Вы успешно вошли в систему', data: infoUser });
   } catch (err) {
     return next(err);
   }
@@ -64,10 +71,10 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     const { name, about, avatar, email, password } = req.body;
     const salt = bcrypt.genSaltSync(BCRYPT_SALT);
     const hash = bcrypt.hashSync(password, salt);
-    const newUser = await new User({ email, name, about, avatar, password: hash }).save();
-    const userObj = newUser.toObject();
-    const { password: passwordFromUser, _id, ...other } = userObj;
-    return createDocumentResponse(res, { message: 'Пользователь успешно создан', data: other });
+    const newUser = await new User({ email, name, about, avatar, password: hash });
+    await newUser.save();
+    const infoUser = publicInfoUser(newUser);
+    return createDocumentResponse(res, { message: 'Пользователь успешно создан', data: infoUser });
   } catch (err) {
     // Проверяем, является ли ошибка ошибкой создания сущности
     if (err instanceof Error && err.message.startsWith(NAME_DUPLIKATE_KEY_ERROR_INDEX)) {

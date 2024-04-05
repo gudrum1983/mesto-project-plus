@@ -20,7 +20,7 @@ export interface IUser {
 
 interface UserModel extends mongoose.Model<IUser> {
   findUserByCredentials: (email: string, password: string) =>
-    Promise<mongoose.Document<string, any, IUser>>
+    Promise<mongoose.Document<unknown, any, IUser>>
 }
 
 export const userSchema = new Schema<IUser, UserModel>(
@@ -77,7 +77,7 @@ export const userSchema = new Schema<IUser, UserModel>(
 );
 
 userSchema.static('findUserByCredentials', async function findUserByCredentials(email: string, password: string) {
-  const currentUser: (mongoose.Document<unknown, any, IUser> & Omit<IUser & {_id: mongoose.Types.ObjectId }, never>) | null = await this.findOne({ email }).select('+password');
+  const currentUser: (mongoose.Document<unknown, any, IUser> & Omit<IUser & { _id: mongoose.Types.ObjectId }, never>) | null = await this.findOne({ email }).select('+password');
 
   if (!currentUser) {
     throw new UnauthorizedError(ERROR_MESSAGE.incorrectEmailPassword);
