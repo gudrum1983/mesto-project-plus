@@ -5,9 +5,9 @@ import { validateUpdateAvatar, validateUpdateUser, validateUserId } from '../mid
 const userRouter = Router();
 
 userRouter.get('/', getUsers); // вернуть всех пользователей
+userRouter.get('/me', getUserMe); // получить данные о себе
 userRouter.get('/:userId', validateUserId, getUserById); // вернуть пользователя по ИД
 userRouter.patch('/me', validateUpdateUser, updateProfile); // обновить профиль
 userRouter.patch('/me/avatar', validateUpdateAvatar, updateAvatar); // обновить аватар
-userRouter.patch('/me', getUserMe); // получить данные о себе
 
 export default userRouter;
