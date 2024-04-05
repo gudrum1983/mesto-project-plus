@@ -21,7 +21,9 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const token = generateToken({ id });
     res
       .cookie(NAME_JWT, token, { maxAge: SEVEN_DAYS, httpOnly: true });
-    return goodResponse(res, user);
+    const userObj = user.toObject();
+    const { password: passwordFromUser, _id, ...other } = userObj;
+    return goodResponse(res, { message: 'Вы успешно вошли в систему', data: other });
   } catch (err) {
     return next(err);
   }
@@ -63,7 +65,9 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     const salt = bcrypt.genSaltSync(BCRYPT_SALT);
     const hash = bcrypt.hashSync(password, salt);
     const newUser = await new User({ email, name, about, avatar, password: hash }).save();
-    return createDocumentResponse(res, newUser);
+    const userObj = newUser.toObject();
+    const { password: passwordFromUser, _id, ...other } = userObj;
+    return createDocumentResponse(res, { message: 'Пользователь успешно создан', data: other });
   } catch (err) {
     // Проверяем, является ли ошибка ошибкой создания сущности
     if (err instanceof Error && err.message.startsWith(NAME_DUPLIKATE_KEY_ERROR_INDEX)) {
@@ -75,7 +79,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 export const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
-  const idUserProfile = req.user!._id;
+  const idUserProfile = req.user!.id;
   const newAvatar = req.body.avatar;
   try {
     const user = await User.findByIdAndUpdate(

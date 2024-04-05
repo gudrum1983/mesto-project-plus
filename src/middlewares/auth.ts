@@ -7,7 +7,7 @@ import { ERROR_MESSAGE } from '../utils/textErrorType';
 export default (req: Request, res: Response, next: NextFunction) => {
   let payload: UserIDJwtPayload;
   try {
-    const token = req.headers.authorization;
+    const token = req.cookies.jwt;
     if (!token) {
       const notAuthorizedError = new UnauthorizedError(ERROR_MESSAGE.notAuth);
       return next(notAuthorizedError);

@@ -8,11 +8,13 @@ import { validateCreateUser, validateLogin } from './middlewares/validate';
 import handlerErrors from './middlewares/errors';
 
 const { errors } = require('celebrate');
+const cookieParser = require('cookie-parser');
 
 const { PORT = 3000, MONGO_URL = 'mongodb://127.0.0.1' } = process.env;
 const app = express();
 
 app.use(express.json()); // для собирания JSON-формата
+app.use(cookieParser()); // для чтения куки
 app.use(express.urlencoded({ extended: true })); // для приёма веб-страниц внутри POST-запроса
 
 app.use(requestLogger); // логер запросов

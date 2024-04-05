@@ -41,12 +41,18 @@ export const userSchema = new Schema<IUser, UserModel>(
       type: String,
       default: DEFAULT_AVATAR,
       validate: {
-        validator: (v: string) => isURL(v, {
-          protocols: ['http', 'https'], // Требуются протоколы http или https
-          require_protocol: true, // URL должен содержать протокол
-          require_valid_protocol: true, // Требуется валидный протокол
-          require_tld: true, // Требуется наличие доменной зоны (TLD)
-        }),
+        validator: (v: string) => {
+          // Если avatar равно значению по умолчанию, то считаем его валидным
+          if (v === DEFAULT_AVATAR) return true;
+
+          // Проведение валидации URL, если значение отличается от значения по умолчанию
+          return isURL(v, {
+            protocols: ['http', 'https'], // Требуются протоколы http или https
+            require_protocol: true, // URL должен содержать протокол
+            require_valid_protocol: true, // Требуется валидный протокол
+            require_tld: true, // Требуется наличие доменной зоны (TLD)
+          });
+        },
         message: ERROR_MESSAGE.incorrectLinkAvatar,
       },
     },
@@ -71,7 +77,7 @@ export const userSchema = new Schema<IUser, UserModel>(
 );
 
 userSchema.static('findUserByCredentials', async function findUserByCredentials(email: string, password: string) {
-  const currentUser = await this.findOne({ email }).select('+password');
+  const currentUser: (mongoose.Document<unknown, any, IUser> & Omit<IUser & {_id: mongoose.Types.ObjectId }, never>) | null = await this.findOne({ email }).select('+password');
 
   if (!currentUser) {
     throw new UnauthorizedError(ERROR_MESSAGE.incorrectEmailPassword);
@@ -80,7 +86,7 @@ userSchema.static('findUserByCredentials', async function findUserByCredentials(
   const matched = await bcrypt.compare(password, currentUser.password);
 
   if (!matched) {
-    throw new Error(ERROR_MESSAGE.incorrectEmailPassword);
+    throw new UnauthorizedError(ERROR_MESSAGE.incorrectEmailPassword);
   }
 
   return currentUser; // теперь currentUser доступен
